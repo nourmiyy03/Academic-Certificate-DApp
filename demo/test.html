@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Academic Certificate DApp — Documentation</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f4f6f8;
+            --white: #ffffff;
+            --dark: #17212b;
+            --text: #27313a;
+            --muted: #687580;
+            --border: #dfe4e8;
+            --primary: #315d87;
+            --primary-light: #eaf1f7;
+            --success: #287a58;
+            --success-bg: #eaf6f0;
+            --danger: #a94450;
+            --danger-bg: #faecee;
+        }
+
+        body {
+            font-family:
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Arial,
+                sans-serif;
+
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        header {
+            background: var(--dark);
+            color: white;
+            padding: 55px 20px;
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .project-label {
+            font-size: 13px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #aebdcc;
+            margin-bottom: 15px;
+        }
+
+        header h1 {
+            font-size: 38px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #c6d0da;
+            max-width: 800px;
+            font-size: 16px;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .meta span {
+            border: 1px solid #3b4a59;
+            padding: 7px 13px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #d6dee6;
+        }
+
+        /* =========================
+           LAYOUT
+        ========================= */
+
+        .layout {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 35px;
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+
+        aside {
+            position: sticky;
+            top: 25px;
+            height: fit-content;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 20px;
+        }
+
+        aside h3 {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: var(--dark);
+        }
+
+        aside ul {
+            list-style: none;
+        }
+
+        aside li {
+            margin-bottom: 7px;
+        }
+
+        aside a {
+            display: block;
+            color: var(--muted);
+            font-size: 13px;
+            padding: 5px 7px;
+            border-radius: 3px;
+        }
+
+        aside a:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* =========================
+           CONTENT
+        ========================= */
+
+        main {
+            min-width: 0;
+        }
+
+        section {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 35px;
+            margin-bottom: 28px;
+        }
+
+        section h2 {
+            color: var(--dark);
+            font-size: 25px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        section h3 {
+            color: var(--dark);
+            font-size: 18px;
+            margin: 25px 0 12px;
+        }
+
+        p {
+            margin-bottom: 14px;
+        }
+
+        ul,
+        ol {
+            margin: 10px 0 18px 25px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        /* =========================
+           INFO BOXES
+        ========================= */
+
+        .info {
+            background: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 15px 18px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+
+        .success {
+            background: var(--success-bg);
+            border-left: 4px solid var(--success);
+            padding: 15px 18px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+
+        .warning {
+            background: #fff7e6;
+            border-left: 4px solid #c88b25;
+            padding: 15px 18px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+
+        .danger {
+            background: var(--danger-bg);
+            border-left: 4px solid var(--danger);
+            padding: 15px 18px;
+            margin: 20px 0;
+            border-radius: 3px;
+        }
+
+        /* =========================
+           TABLE
+        ========================= */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 18px 0;
+            font-size: 14px;
+        }
+
+        th {
+            background: #edf1f4;
+            color: var(--dark);
+            font-weight: 600;
+            text-align: left;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border);
+            padding: 11px 13px;
+            vertical-align: top;
+        }
+
+        /* =========================
+           CODE
+        ========================= */
+
+        code {
+            background: #edf0f3;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Consolas, monospace;
+            font-size: 13px;
+        }
+
+        pre {
+            background: #151b22;
+            color: #dce4ec;
+            padding: 20px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0 20px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        /* =========================
+           ARCHITECTURE
+        ========================= */
+
+        .architecture {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .arch-card {
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 5px;
+            background: #fafbfc;
+        }
+
+        .arch-card h4 {
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .arch-card p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* =========================
+           SCREENSHOTS
+        ========================= */
+
+        .screenshot {
+            margin: 25px 0 35px;
+            border: 1px solid var(--border);
+            background: #fafbfc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .screenshot img {
+            display: block;
+            width: 100%;
+            max-height: 600px;
+            object-fit: contain;
+            background: #eef1f4;
+        }
+
+        .caption {
+            padding: 13px 16px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .caption strong {
+            color: var(--dark);
+        }
+
+        /* =========================
+           VIDEOS
+        ========================= */
+
+        .video {
+            margin: 25px 0 35px;
+            border: 1px solid var(--border);
+            background: #fafbfc;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            max-height: 600px;
+            background: #111;
+        }
+
+        /* =========================
+           STATUS
+        ========================= */
+
+        .status {
+            display: inline-block;
+            padding: 4px 9px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-success {
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        footer {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 20px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align: center;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 800px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            aside {
+                position: static;
+            }
+
+            .architecture {
+                grid-template-columns: 1fr;
+            }
+
+            section {
+                padding: 25px 20px;
+            }
+
+            header h1 {
+                font-size: 29px;
+            }
+        }
+
+        @media print {
+            aside {
+                display: none;
+            }
+
+            .layout {
+                display: block;
+            }
+
+            section {
+                break-inside: avoid;
+            }
+
+            header {
+                background: white;
+                color: black;
+                border-bottom: 2px solid #222;
+            }
+
+            header p,
+            .project-label,
+            .meta span {
+                color: #333;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- =========================================================
+     HEADER
+========================================================= -->
+
+<header>
+    <div class="header-content">
+
+        <div class="project-label">
+            Projet académique — Blockchain & Sécurité
+        </div>
+
+        <h1>Academic Certificate DApp</h1>
+
+        <p>
+            Application décentralisée permettant l'émission, la révocation
+            et la vérification de certificats académiques à l'aide d'un
+            smart contract Ethereum.
+        </p>
+
+        <div class="meta">
+            <span>Solidity</span>
+            <span>Hardhat</span>
+            <span>React + TypeScript</span>
+            <span>MetaMask</span>
+            <span>Ethereum Local Network</span>
+        </div>
+
+    </div>
+</header>
+
+
+<div class="layout">
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside>
+
+    <h3>Sommaire</h3>
+
+    <ul>
+        <li><a href="#introduction">1. Introduction</a></li>
+        <li><a href="#objectives">2. Objectifs</a></li>
+        <li><a href="#architecture">3. Architecture</a></li>
+        <li><a href="#smart-contract">4. Smart Contract</a></li>
+        <li><a href="#deployment">5. Déploiement</a></li>
+        <li><a href="#tests">6. Tests</a></li>
+        <li><a href="#frontend">7. Interface Frontend</a></li>
+        <li><a href="#mint">8. Émission</a></li>
+        <li><a href="#batch">9. Batch Import</a></li>
+        <li><a href="#revoke">10. Révocation</a></li>
+        <li><a href="#verify">11. Vérification</a></li>
+        <li><a href="#security">12. Sécurité</a></li>
+        <li><a href="#results">13. Résultats</a></li>
+        <li><a href="#conclusion">14. Conclusion</a></li>
+    </ul>
+
+</aside>
+
+
+<!-- =========================================================
+     MAIN CONTENT
+========================================================= -->
+
+<main>
+
+
+<!-- =========================================================
+     1. INTRODUCTION
+========================================================= -->
+
+<section id="introduction">
+
+    <h2>1. Introduction</h2>
+
+    <p>
+        Le projet <strong>Academic Certificate DApp</strong> consiste à
+        développer une application décentralisée permettant de gérer
+        des certificats académiques sur une blockchain compatible avec
+        Ethereum.
+    </p>
+
+    <p>
+        L'objectif principal est de garantir l'intégrité et la
+        traçabilité des certificats grâce à un smart contract.
+        Chaque certificat est enregistré avec un identifiant unique
+        et peut ensuite être vérifié ou révoqué.
+    </p>
+
+    <div class="info">
+        <strong>Principe général :</strong>
+        les opérations importantes liées aux certificats sont exécutées
+        par le smart contract, tandis que l'interface React fournit
+        une couche graphique permettant à l'utilisateur d'interagir
+        avec la blockchain.
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     2. OBJECTIVES
+========================================================= -->
+
+<section id="objectives">
+
+    <h2>2. Objectifs du projet</h2>
+
+    <p>
+        Le projet répond aux objectifs suivants :
+    </p>
+
+    <ul>
+        <li>Développer un smart contract en Solidity.</li>
+
+        <li>
+            Permettre à un administrateur d'émettre des certificats
+            académiques.
+        </li>
+
+        <li>
+            Empêcher l'utilisation de doublons de
+            <code>studentId</code>.
+        </li>
+
+        <li>
+            Permettre la révocation d'un certificat existant.
+        </li>
+
+        <li>
+            Vérifier publiquement l'état d'un certificat.
+        </li>
+
+        <li>
+            Importer plusieurs certificats à partir d'un fichier
+            Excel ou CSV.
+        </li>
+
+        <li>
+            Respecter les contraintes de gas lors des opérations batch.
+        </li>
+
+        <li>
+            Tester les principales règles métier directement au niveau
+            du smart contract.
+        </li>
+    </ul>
+
+</section>
+
+
+<!-- =========================================================
+     3. ARCHITECTURE
+========================================================= -->
+
+<section id="architecture">
+
+    <h2>3. Architecture générale</h2>
+
+    <p>
+        L'application est organisée en trois niveaux principaux :
+    </p>
+
+    <div class="architecture">
+
+        <div class="arch-card">
+            <h4>Blockchain</h4>
+
+            <p>
+                Smart contract Solidity déployé sur un réseau
+                Ethereum local à l'aide de Hardhat.
+            </p>
+        </div>
+
+        <div class="arch-card">
+            <h4>Web3 / Wallet</h4>
+
+            <p>
+                MetaMask permet de connecter le portefeuille de
+                l'administrateur et de signer les transactions.
+            </p>
+        </div>
+
+        <div class="arch-card">
+            <h4>Frontend</h4>
+
+            <p>
+                Interface React + TypeScript permettant de gérer
+                les certificats et d'interagir avec le contrat.
+            </p>
+        </div>
+
+    </div>
+
+    <h3>Flux général</h3>
+
+    <pre>
+Utilisateur
+    │
+    ▼
+Interface React
+    │
+    ▼
+MetaMask / Provider
+    │
+    ▼
+Ethereum Local Network
+    │
+    ▼
+CertificateRegistry.sol
+    │
+    ▼
+Blockchain
+    </pre>
+
+</section>
+
+
+<!-- =========================================================
+     4. SMART CONTRACT
+========================================================= -->
+
+<section id="smart-contract">
+
+    <h2>4. Smart Contract</h2>
+
+    <p>
+        Le contrat principal du projet est :
+    </p>
+
+    <pre>
+contracts/CertificateRegistry.sol
+    </pre>
+
+    <p>
+        Le contrat contient une structure <code>Certificate</code>
+        représentant les informations associées à un certificat.
+    </p>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Champ</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>studentName</td>
+                <td>Nom de l'étudiant.</td>
+            </tr>
+
+            <tr>
+                <td>studentId</td>
+                <td>Identifiant académique de l'étudiant.</td>
+            </tr>
+
+            <tr>
+                <td>diplomaTitle</td>
+                <td>Intitulé du diplôme.</td>
+            </tr>
+
+            <tr>
+                <td>issueDate</td>
+                <td>Date d'émission du certificat.</td>
+            </tr>
+
+            <tr>
+                <td>grade</td>
+                <td>Note obtenue.</td>
+            </tr>
+
+            <tr>
+                <td>recipient</td>
+                <td>Adresse Ethereum associée au certificat.</td>
+            </tr>
+
+            <tr>
+                <td>revoked</td>
+                <td>Indique si le certificat a été révoqué.</td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <h3>Fonctionnalités principales</h3>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Fonction</th>
+                <th>Rôle</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><code>mintCertificate()</code></td>
+                <td>Créer un certificat.</td>
+            </tr>
+
+            <tr>
+                <td><code>batchMint()</code></td>
+                <td>Créer plusieurs certificats dans une transaction.</td>
+            </tr>
+
+            <tr>
+                <td><code>getCertificate()</code></td>
+                <td>Récupérer les informations d'un certificat.</td>
+            </tr>
+
+            <tr>
+                <td><code>revokeCertificate()</code></td>
+                <td>Révoquer un certificat.</td>
+            </tr>
+
+            <tr>
+                <td><code>studentIdExists</code></td>
+                <td>Vérifier l'existence d'un identifiant étudiant.</td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <h3>Contrôle d'accès</h3>
+
+    <p>
+        Les opérations d'administration sont protégées par le
+        modificateur <code>onlyOwner</code>.
+    </p>
+
+    <div class="info">
+        Seul le propriétaire du smart contract peut émettre ou
+        révoquer des certificats.
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     5. DEPLOYMENT
+========================================================= -->
+
+<section id="deployment">
+
+    <h2>5. Déploiement du smart contract</h2>
+
+    <p>
+        Le smart contract est compilé et déployé avec Hardhat.
+        Le projet utilise un réseau Ethereum local pour les tests
+        et les démonstrations.
+    </p>
+
+    <h3>Compilation</h3>
+
+    <pre>
+npx hardhat compile
+    </pre>
+
+    <h3>Démarrage du réseau local</h3>
+
+    <pre>
+npx hardhat node
+    </pre>
+
+    <p>
+        Le réseau local utilise la chaîne :
+    </p>
+
+    <table>
+        <tr>
+            <th>Paramètre</th>
+            <th>Valeur</th>
+        </tr>
+
+        <tr>
+            <td>Network</td>
+            <td>Hardhat Local Network</td>
+        </tr>
+
+        <tr>
+            <td>Chain ID</td>
+            <td>31337</td>
+        </tr>
+
+        <tr>
+            <td>RPC</td>
+            <td>http://127.0.0.1:8545</td>
+        </tr>
+    </table>
+
+    <!-- SCREENSHOT DEPLOYMENT -->
+
+    <div class="screenshot">
+
+        <img src="../screenshots/01-deployment.png"
+             alt="Déploiement du smart contract">
+
+        <div class="caption">
+            <strong>Figure 1 — Déploiement du smart contract.</strong>
+            Capture montrant la compilation et/ou le déploiement
+            du contrat sur le réseau Hardhat local.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     6. TESTS
+========================================================= -->
+
+<section id="tests">
+
+    <h2>6. Tests du smart contract</h2>
+
+    <p>
+        Des tests automatisés ont été développés afin de vérifier
+        les principales règles du contrat.
+    </p>
+
+    <h3>Exécution</h3>
+
+    <pre>
+npx hardhat test
+    </pre>
+
+    <div class="success">
+
+        <strong>Résultat :</strong>
+
+        <br>
+
+        15 tests passent avec succès.
+
+    </div>
+
+    <h3>Cas testés</h3>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Résultat</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>Vérification du owner</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Création d'un certificat</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Refus d'un studentId dupliqué</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Refus d'un recipient invalide</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Protection contre un mint non autorisé</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Révocation d'un certificat</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Refus d'une double révocation</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Batch mint</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Protection du batch</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Certificat inexistant</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Révocation d'un certificat inexistant</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>studentId indisponible après révocation</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Batch vide</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+            <tr>
+                <td>Atomicité du batch en cas d'erreur</td>
+                <td><span class="status status-success">PASS</span></td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+
+    <!-- SCREENSHOT TESTS -->
+
+    <div class="screenshot">
+
+        <img src="../screenshots/02-contract-tests.png"
+             alt="Tests du smart contract">
+
+        <div class="caption">
+            <strong>Figure 2 — Tests automatisés du smart contract.</strong>
+            Résultat de l'exécution de la suite de tests Hardhat.
+        </div>
+
+    </div>
+
+
+    <!-- VIDEO TESTS -->
+
+    <div class="video">
+
+        <video controls>
+            <source src="../videos/01-smart-contract-demo.mp4"
+                    type="video/mp4">
+
+            Votre navigateur ne supporte pas la lecture vidéo.
+        </video>
+
+        <div class="caption">
+            <strong>Démonstration vidéo 1 — Smart contract.</strong>
+            Compilation, déploiement et exécution des tests du contrat.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     7. FRONTEND
+========================================================= -->
+
+<section id="frontend">
+
+    <h2>7. Interface Frontend</h2>
+
+    <p>
+        Une interface web développée avec React et TypeScript
+        permet d'utiliser les fonctionnalités du smart contract
+        sans avoir à interagir directement avec la console.
+    </p>
+
+    <h3>Principales interfaces</h3>
+
+    <ul>
+        <li>Connexion du portefeuille MetaMask.</li>
+        <li>Émission d'un certificat.</li>
+        <li>Import batch depuis Excel/CSV.</li>
+        <li>Révocation d'un certificat.</li>
+        <li>Vérification d'un certificat.</li>
+    </ul>
+
+    <!-- SCREENSHOT FRONTEND -->
+
+    <div class="screenshot">
+
+        <img src="../screenshots/03-wallet.png"
+             alt="Connexion MetaMask">
+
+        <div class="caption">
+            <strong>Figure 3 — Connexion du portefeuille.</strong>
+            Connexion de l'administrateur à l'application via MetaMask.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     8. SINGLE MINT
+========================================================= -->
+
+<section id="mint">
+
+    <h2>8. Émission d'un certificat</h2>
+
+    <p>
+        L'administrateur peut créer individuellement un certificat
+        à partir du formulaire d'émission.
+    </p>
+
+    <p>
+        Les données saisies sont transmises au smart contract.
+        MetaMask demande ensuite à l'utilisateur de confirmer
+        la transaction.
+    </p>
+
+    <h3>Processus</h3>
+
+    <ol>
+        <li>Connexion du portefeuille.</li>
+        <li>Saisie des informations du certificat.</li>
+        <li>Validation des données.</li>
+        <li>Envoi de la transaction.</li>
+        <li>Confirmation par le réseau.</li>
+        <li>Affichage du hash de transaction.</li>
+    </ol>
+
+    <div class="screenshot">
+
+        <img src="../screenshots/04-single-mint.png"
+             alt="Émission individuelle d'un certificat">
+
+        <div class="caption">
+            <strong>Figure 4 — Émission individuelle.</strong>
+            Formulaire permettant de créer un certificat académique.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     9. BATCH
+========================================================= -->
+
+<section id="batch">
+
+    <h2>9. Import et émission en batch</h2>
+
+    <p>
+        Afin de faciliter l'enregistrement d'un grand nombre de
+        certificats, l'application permet d'importer un fichier
+        Excel ou CSV.
+    </p>
+
+    <h3>Formats supportés</h3>
+
+    <ul>
+        <li><code>.xlsx</code></li>
+        <li><code>.xls</code></li>
+        <li><code>.csv</code></li>
+    </ul>
+
+    <h3>Validation des données</h3>
+
+    <p>
+        Avant l'envoi vers la blockchain, les données sont vérifiées
+        côté frontend.
+    </p>
+
+    <ul>
+        <li>Champs obligatoires.</li>
+        <li>Validité du grade.</li>
+        <li>Validité de l'adresse Ethereum.</li>
+        <li>Validité de la date.</li>
+        <li>Détection des doublons dans le fichier.</li>
+        <li>Vérification des studentId déjà présents on-chain.</li>
+    </ul>
+
+    <h3>Gestion du gas</h3>
+
+    <div class="warning">
+
+        <strong>Gestion de la taille des lots :</strong>
+
+        <p>
+            Pour éviter une consommation excessive de gas, les certificats
+            sélectionnés sont divisés en lots de taille configurable.
+            Les tailles disponibles sont 5, 10 et 15 certificats.
+        </p>
+
+    </div>
+
+    <p>
+        Les transactions sont envoyées séquentiellement et chaque
+        lot est confirmé avant l'envoi du suivant.
+    </p>
+
+    <div class="screenshot">
+
+        <img src="../screenshots/05-excel-import.png"
+             alt="Import Excel">
+
+        <div class="caption">
+            <strong>Figure 5 — Import du fichier Excel.</strong>
+            Prévisualisation et validation des certificats importés.
+        </div>
+
+    </div>
+
+
+    <div class="screenshot">
+
+        <img src="../screenshots/06-batch-mint.png"
+             alt="Batch mint">
+
+        <div class="caption">
+            <strong>Figure 6 — Émission en batch.</strong>
+            Envoi des certificats sélectionnés en plusieurs transactions.
+        </div>
+
+    </div>
+
+
+    <div class="success">
+
+        <strong>Exemple de test :</strong>
+
+        <br>
+
+        11 certificats ont été enregistrés avec succès dans
+        2 transactions, avec un découpage de 10 + 1 certificats.
+
+    </div>
+
+
+    <div class="video">
+
+        <video controls>
+
+            <source src="../videos/02-frontend-demo.mp4"
+                    type="video/mp4">
+
+            Votre navigateur ne supporte pas la lecture vidéo.
+
+        </video>
+
+        <div class="caption">
+            <strong>Démonstration vidéo 2 — Fonctionnalités frontend.</strong>
+            Connexion, émission, import batch et interactions
+            avec le smart contract.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     10. REVOKE
+========================================================= -->
+
+<section id="revoke">
+
+    <h2>10. Révocation d'un certificat</h2>
+
+    <p>
+        Un certificat peut être révoqué par l'administrateur.
+        La révocation ne supprime pas les données du certificat
+        de la blockchain.
+    </p>
+
+    <p>
+        Son état passe simplement de <strong>Valid</strong> à
+        <strong>Revoked</strong>.
+    </p>
+
+    <div class="info">
+
+        <strong>Choix d'implémentation :</strong>
+
+        <p>
+            Les données historiques restent accessibles afin de
+            préserver la traçabilité du certificat.
+        </p>
+
+    </div>
+
+    <div class="screenshot">
+
+        <img src="../screenshots/07-revoke.png"
+             alt="Révocation d'un certificat">
+
+        <div class="caption">
+            <strong>Figure 7 — Révocation.</strong>
+            Interface permettant de révoquer un certificat existant.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     11. VERIFY
+========================================================= -->
+
+<section id="verify">
+
+    <h2>11. Vérification d'un certificat</h2>
+
+    <p>
+        L'interface de vérification permet de rechercher un certificat
+        à partir de son identifiant.
+    </p>
+
+    <p>
+        Les informations récupérées depuis la blockchain sont affichées
+        à l'utilisateur, notamment :
+    </p>
+
+    <ul>
+        <li>Nom de l'étudiant.</li>
+        <li>Student ID.</li>
+        <li>Diplôme.</li>
+        <li>Date d'émission.</li>
+        <li>Note.</li>
+        <li>Adresse du bénéficiaire.</li>
+        <li>État du certificat.</li>
+    </ul>
+
+    <div class="screenshot">
+
+        <img src="../screenshots/08-verify.png"
+             alt="Vérification d'un certificat">
+
+        <div class="caption">
+            <strong>Figure 8 — Vérification publique.</strong>
+            Consultation des informations d'un certificat à partir
+            de son identifiant.
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     12. SECURITY
+========================================================= -->
+
+<section id="security">
+
+    <h2>12. Mesures de sécurité</h2>
+
+    <p>
+        Plusieurs mécanismes ont été implémentés afin de contrôler
+        les opérations effectuées sur les certificats.
+    </p>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Mécanisme</th>
+                <th>Objectif</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td><code>onlyOwner</code></td>
+                <td>
+                    Empêcher les utilisateurs non autorisés
+                    d'émettre ou révoquer des certificats.
+                </td>
+            </tr>
+
+            <tr>
+                <td>Unique studentId</td>
+                <td>
+                    Empêcher l'émission de certificats dupliqués
+                    pour un même étudiant.
+                </td>
+            </tr>
+
+            <tr>
+                <td>Validation recipient</td>
+                <td>
+                    Vérifier que l'adresse Ethereum fournie est valide.
+                </td>
+            </tr>
+
+            <tr>
+                <td>Validation frontend</td>
+                <td>
+                    Détecter les erreurs avant l'envoi d'une transaction.
+                </td>
+            </tr>
+
+            <tr>
+                <td>Atomicité du batch</td>
+                <td>
+                    Éviter l'enregistrement partiel d'un batch invalide.
+                </td>
+            </tr>
+
+            <tr>
+                <td>Révocation</td>
+                <td>
+                    Marquer explicitement un certificat comme révoqué.
+                </td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+    <div class="danger">
+
+        <strong>Protection contre les doublons :</strong>
+
+        <p>
+            Un <code>studentId</code> reste indisponible même après
+            la révocation du certificat correspondant.
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     13. RESULTS
+========================================================= -->
+
+<section id="results">
+
+    <h2>13. Résultats obtenus</h2>
+
+    <table>
+
+        <thead>
+            <tr>
+                <th>Élément</th>
+                <th>Résultat</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            <tr>
+                <td>Smart contract</td>
+                <td>Implémenté et déployé</td>
+            </tr>
+
+            <tr>
+                <td>Tests automatisés</td>
+                <td>15 tests réussis</td>
+            </tr>
+
+            <tr>
+                <td>Wallet</td>
+                <td>MetaMask intégré</td>
+            </tr>
+
+            <tr>
+                <td>Mint individuel</td>
+                <td>Fonctionnel</td>
+            </tr>
+
+            <tr>
+                <td>Import Excel / CSV</td>
+                <td>Fonctionnel</td>
+            </tr>
+
+            <tr>
+                <td>Batch mint</td>
+                <td>Fonctionnel avec découpage des lots</td>
+            </tr>
+
+            <tr>
+                <td>Révocation</td>
+                <td>Fonctionnelle</td>
+            </tr>
+
+            <tr>
+                <td>Vérification</td>
+                <td>Fonctionnelle</td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+</section>
+
+
+<!-- =========================================================
+     14. CONCLUSION
+========================================================= -->
+
+<section id="conclusion">
+
+    <h2>14. Conclusion</h2>
+
+    <p>
+        Le projet <strong>Academic Certificate DApp</strong> a permis
+        de mettre en œuvre une solution complète de gestion de
+        certificats académiques basée sur la technologie blockchain.
+    </p>
+
+    <p>
+        Le smart contract assure les principales règles métier,
+        notamment le contrôle des autorisations, l'unicité des
+        certificats et leur révocation.
+    </p>
+
+    <p>
+        Le frontend React fournit une interface accessible permettant
+        à l'administrateur d'interagir avec la blockchain et de gérer
+        les certificats individuellement ou en batch.
+    </p>
+
+    <p>
+        Les tests automatisés ainsi que les démonstrations frontend
+        permettent de vérifier le fonctionnement des différentes
+        fonctionnalités développées.
+    </p>
+
+    <div class="success">
+
+        <strong>Conclusion générale :</strong>
+
+        Le projet démontre l'utilisation combinée de Solidity,
+        Hardhat, MetaMask, React et TypeScript pour construire
+        une application décentralisée destinée à la gestion
+        et à la vérification de certificats académiques.
+
+    </div>
+
+</section>
+
+
+</main>
+</div>
+
+
+<!-- =========================================================
+     FOOTER
+========================================================= -->
+
+<footer>
+
+    Academic Certificate DApp — Documentation du projet
+
+    <br>
+
+    Projet académique — Blockchain & Sécurité
+
+</footer>
+
+</body>
+</html>
