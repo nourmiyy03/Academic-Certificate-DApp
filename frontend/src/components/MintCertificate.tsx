@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { isAddress } from "ethers";
 import { getCertificateContract } from "../services/contract";
-
 
 function MintCertificate() {
   const [studentName, setStudentName] = useState("");
@@ -10,40 +10,52 @@ function MintCertificate() {
   const [issueDate, setIssueDate] = useState("");
   const [grade, setGrade] = useState("");
   const [recipient, setRecipient] = useState("");
+  const [tokenURI, setTokenURI] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [mintResult, setMintResult] = useState<{
+  tokenId: string;
+  tokenURI: string;
+  transactionHash: string;
+} | null>(null);
 
   async function handleMint() {
     try {
       setMessage("");
       setMessageType("");
 
-      // Validate required fields
       if (
         !studentName.trim() ||
         !studentId.trim() ||
         !diplomaTitle.trim() ||
         !issueDate ||
         !grade.trim() ||
-        !recipient.trim()
+        !recipient.trim() ||
+        !tokenURI.trim()
       ) {
         setMessage("Please complete all required fields.");
         setMessageType("error");
         return;
       }
 
-      // Validate grade
       if (!Number.isFinite(Number(grade))) {
         setMessage("Grade must be a valid number.");
         setMessageType("error");
         return;
       }
 
-      // Validate Ethereum address
       if (!isAddress(recipient.trim())) {
         setMessage("Please enter a valid Ethereum address.");
+        setMessageType("error");
+        return;
+      }
+
+      try {
+        new URL(tokenURI.trim());
+      } catch {
+        setMessage("Please enter a valid metadata URI.");
         setMessageType("error");
         return;
       }
@@ -58,7 +70,8 @@ function MintCertificate() {
         studentId.trim(),
         diplomaTitle.trim(),
         issueDate,
-        grade.trim()
+        grade.trim(),
+        tokenURI.trim()
       );
 
       setMessage("Transaction sent. Waiting for confirmation...");
@@ -66,18 +79,44 @@ function MintCertificate() {
 
       const receipt = await tx.wait();
 
+      // Retrieve the CertificateMinted event
+      const mintEvent = receipt.logs
+        .map((log: any) => {
+          try {
+            return contract.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find((event: any) => event?.name === "CertificateMinted");
+
+      if (!mintEvent) {
+        throw new Error("CertificateMinted event not found.");
+      }
+
+      const mintedTokenId = mintEvent.args.tokenId.toString();
+
+      // Read the URI stored on the blockchain
+      const confirmedURI = await contract.tokenURI(mintEvent.args.tokenId);
+
+      setMintResult({
+        tokenId: mintedTokenId,
+        tokenURI: confirmedURI,
+        transactionHash: receipt.hash,
+      });
+
       setMessage(
         `Certificate issued successfully! Transaction: ${receipt.hash}`
       );
       setMessageType("success");
 
-      // Reset form after successful mint
       setStudentName("");
       setStudentId("");
       setDiplomaTitle("");
       setIssueDate("");
       setGrade("");
       setRecipient("");
+      setTokenURI("");
 
     } catch (error) {
       console.error("Mint error:", error);
@@ -168,6 +207,19 @@ function MintCertificate() {
           <small>Ethereum address of the certificate recipient.</small>
         </div>
 
+        <div className="form-group full-width">
+          <label>Token Metadata URI *</label>
+          <input
+            type="text"
+            placeholder="https://example.com/certificates/1.json"
+            value={tokenURI}
+            onChange={(e) => setTokenURI(e.target.value)}
+          />
+          <small>
+            URL pointing to the JSON metadata associated with this NFT.
+          </small>
+        </div>
+
       </div>
 
       <div className="form-actions">
@@ -183,6 +235,39 @@ function MintCertificate() {
       {message && (
         <div className={`transaction-message ${messageType}`}>
           {message}
+        </div>
+      )}
+
+      
+      {mintResult && (
+        <div className="transaction-message success">
+          <h4>Certificate Successfully Issued</h4>
+
+          <p>
+            <strong>Token ID:</strong> #{mintResult.tokenId}
+          </p>
+
+          <p>
+            <strong>Token URI:</strong>
+            <a
+              href={mintResult.tokenURI}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {mintResult.tokenURI}
+            </a>
+          </p>
+
+          <p>
+            <strong>Transaction Hash:</strong>
+            <a
+              href={`https://sepolia.etherscan.io/tx/${mintResult.transactionHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {mintResult.transactionHash}
+            </a>
+          </p>
         </div>
       )}
 

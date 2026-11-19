@@ -1,7 +1,11 @@
 import { BrowserProvider, Contract } from "ethers";
 import CertificateRegistry from "../contracts/CertificateRegistry.json";
 
-const CONTRACT_ADDRESS = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9";
+
+const CONTRACT_ADDRESS = "0x5FbDB2315678afecb367f032d93F642f64180aa3";
+
+// Local Hardhat network: Chain ID 31337
+const EXPECTED_CHAIN_ID = 31337n;
 
 export async function getCertificateContract() {
   if (!window.ethereum) {
@@ -9,6 +13,12 @@ export async function getCertificateContract() {
   }
 
   const provider = new BrowserProvider(window.ethereum);
+
+  const network = await provider.getNetwork();
+
+  if (network.chainId !== EXPECTED_CHAIN_ID) {
+    throw new Error("Please connect MetaMask to the Hardhat Local Network");
+  }
 
   const signer = await provider.getSigner();
 

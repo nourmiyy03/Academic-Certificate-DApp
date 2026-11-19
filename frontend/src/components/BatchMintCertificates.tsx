@@ -11,11 +11,20 @@ interface CertificateRow {
   issueDate: string;
   grade: string;
   recipient: string;
+  uri: string;
 }
 
 interface ValidatedCertificate extends CertificateRow {
   rowNumber: number;
   errors: string[];
+}
+
+interface MintedCertificate {
+  studentName: string;
+  studentId: string;
+  tokenId: string;
+  tokenURI: string;
+  transactionHash: string;
 }
 
 function formatExcelDate(value: unknown): string {
@@ -51,6 +60,8 @@ function BatchMintCertificates() {
   const [mintMessageType, setMintMessageType] = useState("");
   const [fileName, setFileName] = useState("");
   const [batchSize, setBatchSize] = useState(10);
+  const [mintedCertificates, setMintedCertificates] =
+  useState<MintedCertificate[]>([]);
 
   function handleFileUpload(
     event: React.ChangeEvent<HTMLInputElement>
@@ -106,8 +117,9 @@ function BatchMintCertificates() {
               issueDate: formatExcelDate(row.issueDate),
               grade: String(row.grade ?? "").trim(),
               recipient: String(row.recipient ?? "").trim(),
+              uri: String(row.uri ?? "").trim(),
             };
-
+          
             const errors: string[] = [];
 
             if (!certificate.studentName)
@@ -132,6 +144,18 @@ function BatchMintCertificates() {
             if (!isAddress(certificate.recipient))
               errors.push("Invalid Ethereum address");
 
+            // Validate metadata URI
+            if (!certificate.uri) {
+              errors.push("Missing metadata URI");
+            }
+
+            try {
+              new URL(certificate.uri);
+            } catch {
+              errors.push("Invalid metadata URI");
+            }
+
+            // Check duplicate Student IDs
             const idKey = certificate.studentId.toLowerCase();
 
             if (idKey && (idCounts.get(idKey) || 0) > 1) {
@@ -225,6 +249,7 @@ function BatchMintCertificates() {
           issueDate: row.issueDate,
           grade: row.grade,
           recipient: row.recipient,
+          uri: row.uri, 
         }));
 
       if (selectedCertificates.length === 0) {
@@ -260,7 +285,15 @@ function BatchMintCertificates() {
 
         try {
           // Send transaction
-          const tx = await contract.batchMint(batchData);
+          const tx = await contract.batchMintCertificates(
+            batchData.map((cert) => cert.recipient),
+            batchData.map((cert) => cert.uri),
+            batchData.map((cert) => cert.studentName),
+            batchData.map((cert) => cert.studentId),
+            batchData.map((cert) => cert.diplomaTitle),
+            batchData.map((cert) => cert.issueDate),
+            batchData.map((cert) => cert.grade)
+          );
 
           setMintMessage(
             `Batch ${i + 1}/${totalBatches} sent. Waiting for confirmation...`
@@ -270,6 +303,38 @@ function BatchMintCertificates() {
           const receipt = await tx.wait();
 
           transactionHashes.push(receipt.hash);
+
+          // Retrieve minted certificates from CertificateMinted events
+          for (const log of receipt.logs) {
+            try {
+              const event = contract.interface.parseLog(log);
+
+              if (event?.name === "CertificateMinted") {
+                const tokenId = event.args.tokenId;
+                const studentId = event.args.studentId;
+
+                const tokenURI = await contract.tokenURI(tokenId);
+
+                const certificate = currentBatch.find(
+                  (cert) => cert.studentId === studentId
+                );
+
+                setMintedCertificates((previous) => [
+                  ...previous,
+                  {
+                    studentName: certificate?.studentName || "Unknown",
+                    studentId: studentId,
+                    tokenId: tokenId.toString(),
+                    tokenURI,
+                    transactionHash: receipt.hash,
+                  },
+                ]);
+              }
+            } catch {
+              // Ignore logs that are not CertificateMinted events
+            }
+          }
+
           completedCount += currentBatch.length;
 
           // Remove successfully minted rows from selection
@@ -521,6 +586,51 @@ function BatchMintCertificates() {
               {mintMessage}
             </div>
           )}
+
+          {mintedCertificates.length > 0 && (
+            <div className="minted-certificates">
+              <h3>Minted Certificates</h3>
+
+              {mintedCertificates.map((certificate) => (
+                <div key={certificate.tokenId} className="certificate-result">
+                  <p>
+                    <strong>Student:</strong> {certificate.studentName}
+                  </p>
+
+                  <p>
+                    <strong>Student ID:</strong> {certificate.studentId}
+                  </p>
+
+                  <p>
+                    <strong>Token ID:</strong> #{certificate.tokenId}
+                  </p>
+
+                  <p>
+                    <strong>Token URI:</strong>{" "}
+                    <a
+                      href={certificate.tokenURI}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {certificate.tokenURI}
+                    </a>
+                  </p>
+
+                  <p>
+                    <strong>Transaction Hash:</strong>{" "}
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${certificate.transactionHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {certificate.transactionHash}
+                    </a>
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+
         </>
       )}
     </div>

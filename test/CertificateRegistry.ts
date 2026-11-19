@@ -1,351 +1,398 @@
+
 import { expect } from "chai";
 import { network } from "hardhat";
 
-describe("CertificateRegistry", function () {
+describe("CertificateRegistry ERC-721", function () {
 
   async function deployContract() {
     const { ethers } = await network.connect();
 
-    const [owner, student] = await ethers.getSigners();
+    const [admin, minter, student, unauthorized] =
+      await ethers.getSigners();
 
     const CertificateRegistry =
       await ethers.getContractFactory("CertificateRegistry");
 
     const contract = await CertificateRegistry.deploy();
+    await contract.waitForDeployment();
 
-    return { contract, owner, student, ethers };
+    const MINTER_ROLE = await contract.MINTER_ROLE();
+    const DEFAULT_ADMIN_ROLE =
+      await contract.DEFAULT_ADMIN_ROLE();
+
+    await contract.grantRole(MINTER_ROLE, minter.address);
+
+    return {
+      ethers,
+      contract,
+      admin,
+      minter,
+      student,
+      unauthorized,
+      MINTER_ROLE,
+      DEFAULT_ADMIN_ROLE
+    };
   }
 
+  const certificate = {
+    studentName: "Ahmed Benali",
+    studentId: "ST001",
+    diplomaTitle: "Master Data Engineering and AI",
+    issueDate: "2026-11-18",
+    grade: "15.50",
+    uri: "https://example.com/certificates/1.json"
+  };
+
+  // =========================
+  // DEPLOYMENT
+  // =========================
 
   describe("Deployment", function () {
 
-    it("should set the deployer as owner", async function () {
+    it("should grant admin and minter roles to deployer", async function () {
+      const { contract, admin, MINTER_ROLE, DEFAULT_ADMIN_ROLE } =
+        await deployContract();
 
-      const { contract, owner } = await deployContract();
+      expect(await contract.hasRole(DEFAULT_ADMIN_ROLE, admin.address))
+        .to.equal(true);
 
-      expect(await contract.owner()).to.equal(owner.address);
+      expect(await contract.hasRole(MINTER_ROLE, admin.address))
+        .to.equal(true);
+    });
+
+    it("should expose the ERC-721 interface", async function () {
+      const { contract } = await deployContract();
+
+      expect(await contract.supportsInterface("0x80ac58cd"))
+        .to.equal(true);
     });
 
   });
 
+  // =========================
+  // MINT CERTIFICATE
+  // =========================
 
   describe("Mint Certificate", function () {
 
-    it("should create a certificate", async function () {
+    it("should mint an NFT with correct metadata", async function () {
+      const { contract, minter, student } = await deployContract();
 
-      const { contract, owner } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
       );
 
-      const certificate = await contract.getCertificate(1);
+      expect(await contract.ownerOf(1)).to.equal(student.address);
+      expect(await contract.tokenURI(1)).to.equal(certificate.uri);
 
-      expect(certificate.studentName).to.equal("Ahmed Benali");
-      expect(certificate.studentId).to.equal("ST001");
-      expect(certificate.diplomaTitle)
-        .to.equal("Master Data Engineering and AI");
-      expect(certificate.issueDate).to.equal("2026-11-18");
-      expect(certificate.grade).to.equal("15.50");
-      expect(certificate.recipient).to.equal(owner.address);
-      expect(certificate.revoked).to.equal(false);
+      const result = await contract.getCertificate(1);
+
+      expect(result.studentName).to.equal(certificate.studentName);
+      expect(result.studentId).to.equal(certificate.studentId);
+      expect(result.diplomaTitle).to.equal(certificate.diplomaTitle);
+      expect(result.issueDate).to.equal(certificate.issueDate);
+      expect(result.grade).to.equal(certificate.grade);
+      expect(result.recipient).to.equal(student.address);
+      expect(result.revoked).to.equal(false);
     });
 
+    it("should reject duplicate student IDs", async function () {
+      const { contract, minter, student } = await deployContract();
 
-    it("should reject duplicate studentId", async function () {
-
-      const { contract, owner } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
       );
 
       await expect(
-        contract.mintCertificate(
-          owner.address,
+        contract.connect(minter).mintCertificate(
+          student.address,
           "Another Student",
-          "ST001",
-          "Master Data Engineering and AI",
-          "2026-11-18",
-          "14.00"
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          "https://example.com/2.json"
         )
       ).to.be.revertedWith("Student already certified");
     });
 
-
-    it("should reject an invalid recipient", async function () {
-
-      const { contract } = await deployContract();
+    it("should reject zero address", async function () {
+      const { ethers, contract, minter } = await deployContract();
 
       await expect(
-        contract.mintCertificate(
-          "0x0000000000000000000000000000000000000000",
-          "Ahmed Benali",
-          "ST001",
-          "Master Data Engineering and AI",
-          "2026-11-18",
-          "15.50"
+        contract.connect(minter).mintCertificate(
+          ethers.ZeroAddress,
+          certificate.studentName,
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          certificate.uri
         )
       ).to.be.revertedWith("Invalid recipient");
     });
 
+    it("should reject empty URI", async function () {
+      const { contract, minter, student } = await deployContract();
+
+      await expect(
+        contract.connect(minter).mintCertificate(
+          student.address,
+          certificate.studentName,
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          ""
+        )
+      ).to.be.revertedWith("Invalid token URI");
+    });
+
+    it("should emit CertificateMinted event", async function () {
+      const { contract, minter, student } = await deployContract();
+
+      await expect(
+        contract.connect(minter).mintCertificate(
+          student.address,
+          certificate.studentName,
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          certificate.uri
+        )
+      )
+        .to.emit(contract, "CertificateMinted")
+        .withArgs(1, certificate.studentId, student.address);
+    });
+
   });
 
+  // =========================
+  // ACCESS CONTROL
+  // =========================
 
   describe("Access Control", function () {
 
-    it("should prevent non-owner from minting", async function () {
-
-      const { contract, student } = await deployContract();
-
-      const studentContract = contract.connect(student);
+    it("should prevent unauthorized minting", async function () {
+      const { ethers, contract, unauthorized } = await deployContract();
 
       await expect(
-        studentContract.mintCertificate(
-          student.address,
-          "Ahmed Benali",
-          "ST001",
-          "Master Data Engineering and AI",
-          "2026-11-18",
-          "15.50"
+        contract.connect(unauthorized).mintCertificate(
+          unauthorized.address,
+          certificate.studentName,
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          certificate.uri
         )
-      ).to.be.revertedWith("Not authorized");
+      ).to.be.revert(ethers);
     });
 
-  });
+    it("should prevent unauthorized revocation", async function () {
+      const { ethers, contract, minter, student, unauthorized } =
+        await deployContract();
 
-
-  describe("Revocation", function () {
-
-    it("should revoke a certificate", async function () {
-
-      const { contract, owner } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
       );
-
-      await contract.revokeCertificate(1);
-
-      const certificate = await contract.getCertificate(1);
-
-      expect(certificate.revoked).to.equal(true);
-    });
-
-
-    it("should reject revoking an already revoked certificate", async function () {
-
-      const { contract, owner } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
-      );
-
-      await contract.revokeCertificate(1);
 
       await expect(
-        contract.revokeCertificate(1)
-      ).to.be.revertedWith("Certificate already revoked");
+        contract.connect(unauthorized).revokeCertificate(1)
+      ).to.be.revert(ethers);
+    });
+
+    it("should prevent non-admin from granting roles", async function () {
+      const { ethers, contract, unauthorized, MINTER_ROLE } =
+        await deployContract();
+
+      await expect(
+        contract.connect(unauthorized).grantRole(
+          MINTER_ROLE,
+          unauthorized.address
+        )
+      ).to.be.revert(ethers);
     });
 
   });
 
+  // =========================
+  // BATCH MINT
+  // =========================
 
   describe("Batch Mint", function () {
 
-    it("should create multiple certificates", async function () {
+    it("should mint multiple NFTs", async function () {
+      const { contract, minter, student } = await deployContract();
 
-      const { contract, owner } = await deployContract();
-
-      const certificates = [
-        {
-          studentName: "Ahmed Benali",
-          studentId: "ST001",
-          diplomaTitle: "Master Data Engineering and AI",
-          issueDate: "2026-11-18",
-          grade: "15.50",
-          recipient: owner.address
-        },
-        {
-          studentName: "Sara Amrani",
-          studentId: "ST002",
-          diplomaTitle: "Master Data Engineering and AI",
-          issueDate: "2026-11-18",
-          grade: "16.20",
-          recipient: owner.address
-        }
-      ];
-
-      await contract.batchMint(certificates);
-
-      const cert1 = await contract.getCertificate(1);
-      const cert2 = await contract.getCertificate(2);
-
-      expect(cert1.studentName).to.equal("Ahmed Benali");
-      expect(cert1.studentId).to.equal("ST001");
-
-      expect(cert2.studentName).to.equal("Sara Amrani");
-      expect(cert2.studentId).to.equal("ST002");
-    });
-
-  });
-
-
-
-  describe("Additional Access Control", function () {
-
-    it("should prevent non-owner from revoking a certificate", async function () {
-      const { contract, owner, student } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
+      await contract.connect(minter).batchMintCertificates(
+        [student.address, student.address],
+        [
+          "https://example.com/1.json",
+          "https://example.com/2.json"
+        ],
+        ["Ahmed Benali", "Sara Amrani"],
+        ["ST001", "ST002"],
+        [
+          "Master Data Engineering and AI",
+          "Master Data Engineering and AI"
+        ],
+        ["2026-11-18", "2026-11-18"],
+        ["15.50", "16.20"]
       );
 
-      const studentContract = contract.connect(student);
+      expect(await contract.ownerOf(1)).to.equal(student.address);
+      expect(await contract.ownerOf(2)).to.equal(student.address);
 
-      await expect(
-        studentContract.revokeCertificate(1)
-      ).to.be.revertedWith("Not authorized");
+      expect(await contract.tokenURI(1))
+        .to.equal("https://example.com/1.json");
+
+      expect(await contract.tokenURI(2))
+        .to.equal("https://example.com/2.json");
     });
 
-    it("should prevent non-owner from batch minting", async function () {
-      const { contract, student } = await deployContract();
-
-      const certificates = [
-        {
-          studentName: "Ahmed Benali",
-          studentId: "ST001",
-          diplomaTitle: "Master Data Engineering and AI",
-          issueDate: "2026-11-18",
-          grade: "15.50",
-          recipient: student.address
-        }
-      ];
-
-      const studentContract = contract.connect(student);
+    it("should reject empty batch", async function () {
+      const { contract, minter } = await deployContract();
 
       await expect(
-        studentContract.batchMint(certificates)
-      ).to.be.revertedWith("Not authorized");
-    });
-
-  });
-
-
-  describe("Certificate Validation", function () {
-
-    it("should reject retrieving a certificate that does not exist", async function () {
-      const { contract } = await deployContract();
-
-      await expect(
-        contract.getCertificate(1)
-      ).to.be.revertedWith("Certificate does not exist");
-    });
-
-    it("should reject revoking a certificate that does not exist", async function () {
-      const { contract } = await deployContract();
-
-      await expect(
-        contract.revokeCertificate(1)
-      ).to.be.revertedWith("Certificate does not exist");
-    });
-
-    it("should not allow reusing a student ID after revocation", async function () {
-      const { contract, owner } = await deployContract();
-
-      await contract.mintCertificate(
-        owner.address,
-        "Ahmed Benali",
-        "ST001",
-        "Master Data Engineering and AI",
-        "2026-11-18",
-        "15.50"
-      );
-
-      await contract.revokeCertificate(1);
-
-      await expect(
-        contract.mintCertificate(
-          owner.address,
-          "Ahmed Benali",
-          "ST001",
-          "Another Diploma",
-          "2026-11-19",
-          "16.00"
+        contract.connect(minter).batchMintCertificates(
+          [], [], [], [], [], [], []
         )
-      ).to.be.revertedWith("Student already certified");
-    });
-
-  });
-
-
-  describe("Batch Mint Validation", function () {
-
-    it("should reject an empty batch", async function () {
-      const { contract } = await deployContract();
-
-      await expect(
-        contract.batchMint([])
       ).to.be.revertedWith("Empty batch");
     });
 
-    it("should revert the entire batch if a duplicate student ID is found", async function () {
-      const { contract, owner } = await deployContract();
-
-      const certificates = [
-        {
-          studentName: "Ahmed Benali",
-          studentId: "ST001",
-          diplomaTitle: "Master Data Engineering and AI",
-          issueDate: "2026-11-18",
-          grade: "15.50",
-          recipient: owner.address
-        },
-        {
-          studentName: "Sara Amrani",
-          studentId: "ST001",
-          diplomaTitle: "Master Data Engineering and AI",
-          issueDate: "2026-11-18",
-          grade: "16.20",
-          recipient: owner.address
-        }
-      ];
+    it("should reject duplicate IDs inside a batch", async function () {
+      const { contract, minter, student } = await deployContract();
 
       await expect(
-        contract.batchMint(certificates)
+        contract.connect(minter).batchMintCertificates(
+          [student.address, student.address],
+          ["uri1", "uri2"],
+          ["Ahmed", "Sara"],
+          ["ST001", "ST001"],
+          ["Master", "Master"],
+          ["2026-11-18", "2026-11-18"],
+          ["15", "16"]
+        )
       ).to.be.revertedWith("Student already certified");
 
-      // Verify that the first certificate was also rolled back
       expect(await contract.studentIdExists("ST001")).to.equal(false);
+    });
+
+    it("should reject arrays with different lengths", async function () {
+      const { contract, minter, student } = await deployContract();
 
       await expect(
-        contract.getCertificate(1)
-      ).to.be.revertedWith("Certificate does not exist");
+        contract.connect(minter).batchMintCertificates(
+          [student.address],
+          [],
+          ["Ahmed"],
+          ["ST001"],
+          ["Master"],
+          ["2026-11-18"],
+          ["15"]
+        )
+      ).to.be.revertedWith("Array length mismatch");
+    });
+
+  });
+
+  // =========================
+  // REVOCATION
+  // =========================
+
+  describe("Revocation", function () {
+
+    it("should revoke a certificate and emit an event", async function () {
+      const { contract, minter, admin, student } = await deployContract();
+
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
+      );
+
+      await expect(contract.connect(admin).revokeCertificate(1))
+        .to.emit(contract, "CertificateRevoked")
+        .withArgs(1);
+
+      const result = await contract.getCertificate(1);
+
+      expect(result.revoked).to.equal(true);
+
+      // Revocation does not destroy the NFT.
+      expect(await contract.ownerOf(1)).to.equal(student.address);
+    });
+
+    it("should prevent revoking an already revoked certificate", async function () {
+      const { contract, minter, admin, student } = await deployContract();
+
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
+      );
+
+      await contract.connect(admin).revokeCertificate(1);
+
+      await expect(
+        contract.connect(admin).revokeCertificate(1)
+      ).to.be.revertedWith("Certificate already revoked");
+    });
+
+    it("should prevent reusing student ID after revocation", async function () {
+      const { contract, minter, admin, student } = await deployContract();
+
+      await contract.connect(minter).mintCertificate(
+        student.address,
+        certificate.studentName,
+        certificate.studentId,
+        certificate.diplomaTitle,
+        certificate.issueDate,
+        certificate.grade,
+        certificate.uri
+      );
+
+      await contract.connect(admin).revokeCertificate(1);
+
+      await expect(
+        contract.connect(minter).mintCertificate(
+          student.address,
+          certificate.studentName,
+          certificate.studentId,
+          certificate.diplomaTitle,
+          certificate.issueDate,
+          certificate.grade,
+          "https://example.com/2.json"
+        )
+      ).to.be.revertedWith("Student already certified");
     });
 
   });

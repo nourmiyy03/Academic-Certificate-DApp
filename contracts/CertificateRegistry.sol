@@ -1,10 +1,14 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract CertificateRegistry {
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
-    // Structure représentant un certificat académique
+contract CertificateRegistry is ERC721URIStorage, AccessControl, ReentrancyGuard {
+
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
     struct Certificate {
         string studentName;
         string studentId;
@@ -15,38 +19,26 @@ contract CertificateRegistry {
         bool revoked;
     }
 
-    // Identifiant du prochain certificat
     uint256 private nextCertificateId = 1;
 
-    // Stockage des certificats : ID => Certificate
     mapping(uint256 => Certificate) private certificates;
 
-    // Vérifier si un étudiant possède déjà un certificat
     mapping(string => bool) public studentIdExists;
 
-    // Adresse du propriétaire du contrat
-    address public owner;
-
-
-
-    // event permet a l'app frontend de détecter qu'un certificat vient d'être créé
     event CertificateMinted(
-        uint256 indexed certId,
+        uint256 indexed tokenId,
         string studentId,
         address recipient
     );
 
-    // Constructeur exécuté une seule fois au déploiement
-    constructor() {
-        owner = msg.sender;
-    }
-    
+    event CertificateRevoked(
+        uint256 indexed tokenId
+    );
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not authorized");
-        _;
+    constructor() ERC721("Academic Certificate", "ACERT") {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
     }
-
 
     function mintCertificate(
         address to,
@@ -54,15 +46,118 @@ contract CertificateRegistry {
         string calldata studentId,
         string calldata diplomaTitle,
         string calldata issueDate,
+        string calldata grade,
+        string calldata uri
+    )
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
+        returns (uint256 tokenId)
+    {
+        tokenId = nextCertificateId;
+
+        _mintCertificate(
+            to,
+            uri,
+            studentName,
+            studentId,
+            diplomaTitle,
+            issueDate,
+            grade
+        );
+    }
+
+    function batchMintCertificates(
+        address[] calldata to,
+        string[] calldata uris,
+        string[] calldata studentNames,
+        string[] calldata studentIds,
+        string[] calldata diplomaTitles,
+        string[] calldata issueDates,
+        string[] calldata grades
+    )
+        external
+        onlyRole(MINTER_ROLE)
+        nonReentrant
+    {
+        require(to.length > 0, "Empty batch");
+
+        require(
+            to.length == uris.length &&
+            to.length == studentNames.length &&
+            to.length == studentIds.length &&
+            to.length == diplomaTitles.length &&
+            to.length == issueDates.length &&
+            to.length == grades.length,
+            "Array length mismatch"
+        );
+
+        for (uint256 i = 0; i < to.length; i++) {
+            _mintCertificate(
+                to[i],
+                uris[i],
+                studentNames[i],
+                studentIds[i],
+                diplomaTitles[i],
+                issueDates[i],
+                grades[i]
+            );
+        }
+    }
+
+    function _mintCertificate(
+        address to,
+        string calldata uri,
+        string calldata studentName,
+        string calldata studentId,
+        string calldata diplomaTitle,
+        string calldata issueDate,
         string calldata grade
-    ) external onlyOwner returns (uint256 certId) {
-
+    )
+        internal
+    {
         require(to != address(0), "Invalid recipient");
-        require(!studentIdExists[studentId], "Student already certified");
 
-        certId = nextCertificateId;
+        require(
+            bytes(studentName).length > 0,
+            "Invalid student name"
+        );
 
-        certificates[certId] = Certificate({
+        require(
+            bytes(studentId).length > 0,
+            "Invalid student ID"
+        );
+
+        require(
+            bytes(diplomaTitle).length > 0,
+            "Invalid diploma title"
+        );
+
+        require(
+            bytes(issueDate).length > 0,
+            "Invalid issue date"
+        );
+
+        require(
+            bytes(grade).length > 0,
+            "Invalid grade"
+        );
+
+        require(
+            bytes(uri).length > 0,
+            "Invalid token URI"
+        );
+
+        require(
+            !studentIdExists[studentId],
+            "Student already certified"
+        );
+
+        uint256 tokenId = nextCertificateId;
+
+
+        // 1. Effects: update the contract state first
+        certificates[tokenId] = Certificate({
             studentName: studentName,
             studentId: studentId,
             diplomaTitle: diplomaTitle,
@@ -73,77 +168,80 @@ contract CertificateRegistry {
         });
 
         studentIdExists[studentId] = true;
-
         nextCertificateId++;
 
+        // 2. Interactions: perform external calls after state updates
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, uri);
+
+        // 3. Emit event
         emit CertificateMinted(
-            certId,
+            tokenId,
             studentId,
             to
         );
     }
 
+    function revokeCertificate(
+        uint256 tokenId
+    )
+        external
+        onlyRole(DEFAULT_ADMIN_ROLE)
+    {
+        require(
+            _ownerOf(tokenId) != address(0),
+            "Certificate does not exist"
+        );
 
-    // Consulter les informations d'un certificat
-    function getCertificate(uint256 certId) external view returns (Certificate memory) {
-        require(certId > 0 && certId < nextCertificateId, "Certificate does not exist");
+        require(
+            !certificates[tokenId].revoked,
+            "Certificate already revoked"
+        );
 
-        return certificates[certId];
+        certificates[tokenId].revoked = true;
+
+        emit CertificateRevoked(tokenId);
     }
 
-    // Révoquer un certificat
-    function revokeCertificate(uint256 certId) external onlyOwner {
-        require(certId > 0 && certId < nextCertificateId, "Certificate does not exist");
-        require(!certificates[certId].revoked, "Certificate already revoked");
+    function getCertificate(
+        uint256 tokenId
+    )
+        external
+        view
+        returns (Certificate memory)
+    {
+        require(
+            _ownerOf(tokenId) != address(0),
+            "Certificate does not exist"
+        );
 
-        certificates[certId].revoked = true;
+        return certificates[tokenId];
     }
 
+    function tokenURI(
+        uint256 tokenId
+    )
+        public
+        view
+        override
+        returns (string memory)
+    {
+        require(
+            _ownerOf(tokenId) != address(0),
+            "Certificate does not exist"
+        );
 
-    struct CertificateInput {
-        string studentName;
-        string studentId;
-        string diplomaTitle;
-        string issueDate;
-        string grade;
-        address recipient;
+        return super.tokenURI(tokenId);
     }
 
-
-    function batchMint(
-        CertificateInput[] calldata inputs
-    ) external onlyOwner {
-        require(inputs.length > 0, "Empty batch");
-
-        for (uint256 i = 0; i < inputs.length; i++) {
-            _mintCertificate(inputs[i]);
-        }
+    function supportsInterface(
+        bytes4 interfaceId
+    )
+        public
+        view
+        override(ERC721URIStorage, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
-
-
-    function _mintCertificate(
-        CertificateInput calldata input
-    ) internal {
-        require(input.recipient != address(0), "Invalid recipient");
-        require(!studentIdExists[input.studentId], "Student already certified");
-
-        uint256 certId = nextCertificateId;
-
-        certificates[certId] = Certificate({
-            studentName: input.studentName,
-            studentId: input.studentId,
-            diplomaTitle: input.diplomaTitle,
-            issueDate: input.issueDate,
-            grade: input.grade,
-            recipient: input.recipient,
-            revoked: false
-        });
-
-        studentIdExists[input.studentId] = true;
-        nextCertificateId++;
-
-        emit CertificateMinted(certId, input.studentId, input.recipient);
-    }
-
-
 }
